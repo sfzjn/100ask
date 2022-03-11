@@ -163,7 +163,7 @@ def HSV2BGR(_img, hsv):
         out[..., 2][ind] = (V - C)[ind] + vals[i][2][ind]
 
     out[np.where(max_v == min_v)] = 0
-    #指定out上下界为0,1
+    # 指定out上下界为0,1
     out = np.clip(out, 0, 1)
     out = (out * 255).astype(np.uint8)
 
@@ -173,7 +173,7 @@ def HSV2BGR(_img, hsv):
 def ask5(img):
     originimg = img.copy()
 
-    t1=cv2.getTickCount()
+    t1 = cv2.getTickCount()
     h, w, c = img.shape
     hsv1 = np.zeros_like(img)
     for x in range(h):
@@ -198,7 +198,7 @@ def ask5(img):
 
             S = max_c - min_c
             V = max_c
-            H = (H+180) % 360
+            H = (H + 180) % 360
             # print(H)
             hsv1[x, y] = [H, S, V]
 
@@ -220,40 +220,198 @@ def ask5(img):
                 tmp = [C, 0, X]
 
             img[x, y] = ((V - C) * np.array([1, 1, 1]) + tmp) * np.array([255, 255, 255])
-            #print((V - C) * np.array([1, 1, 1]))
-            #print("tmp:",tmp)
+            # print((V - C) * np.array([1, 1, 1]))
+            # print("tmp:",tmp)
 
-    #print(img)
+    # print(img)
     img = img[:, :, (2, 1, 0)].astype("uint8")
 
-    t2=cv2.getTickCount()
-    print("我的耗时：%rus"%((t2-t1)/cv2.getTickFrequency()))
-    #print("还原:",img)
-    #cv2.imwrite("r.jpg", img)
-    #cv_show("result", img)
+    t2 = cv2.getTickCount()
+    print("我的耗时：%rus" % ((t2 - t1) / cv2.getTickFrequency()))
+    # print("还原:",img)
+    # cv2.imwrite("r.jpg", img)
+    # cv_show("result", img)
 
     print("-----官方运算过程-----")
-    t1=cv2.getTickCount()
+    t1 = cv2.getTickCount()
     hsv = BGR2HSV(originimg)
     # print("hsv:", hsv)
     # print("hsv1:", hsv1)
     # print(hsv1 == hsv)
     hsv[..., 0] = (hsv[..., 0] + 180) % 360
     out = HSV2BGR(originimg, hsv)
-    t2=cv2.getTickCount()
-    print("官方耗时：%rus"%((t2-t1)/cv2.getTickFrequency()))
-    cv_show("compare",np.hstack((img,out)))
+    t2 = cv2.getTickCount()
+    print("官方耗时：%rus" % ((t2 - t1) / cv2.getTickFrequency()))
+    cv_show("compare", np.hstack((img, out)))
 
     # print(out)
-    #cv_show("out", out)
+    # cv_show("out", out)
 
+
+# 减色处理
+def ask6(img):
+    # for i in range(3):
+    img = np.where(img < 64, 32, img)
+    img = np.where((img >= 64) & (img < 128), 96, img)
+    img = np.where((img >= 128) & (img < 192), 160, img)
+    img = np.where((img >= 192) & (img < 256), 224, img)
+
+    cv_show("img", img)
+
+
+# 平均池化(想了2种方法)
+def ask7(img):
+    h, w, _ = img.shape
+    hstep, wstep = h // 8, w // 8
+
+    img1 = np.copy(img)
+    for x in range(hstep):
+        for y in range(wstep):
+            meanb = np.mean(img1[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), 0])
+            meang = np.mean(img1[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), 1])
+            meanr = np.mean(img1[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), 2])
+            img1[8 * x:8 * (x + 1), 8 * y:8 * (y + 1)] = [meanb, meang, meanr]
+            # print(meanb,meang,meanr)
+
+    img2 = np.copy(img)
+    for x in range(hstep):
+        for y in range(wstep):
+            meanval = np.mean(img2[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), :], axis=(0, 1)).astype(np.int)
+            # print(meanval)
+            img2[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), :] = meanval
+            # print(meanb,meang,meanr)
+
+    cv_show("compare", np.hstack((img, img1, img2)))
+
+
+# 最大池化
+def ask8(img):
+    img1 = np.copy(img)
+    h, w, _ = img.shape
+    hstep, wstep = h // 8, w // 8
+    for x in range(hstep):
+        for y in range(wstep):
+            meanval = np.max(img1[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), :], axis=(0, 1))
+            img1[8 * x:8 * (x + 1), 8 * y:8 * (y + 1), :] = meanval
+
+    cv_show("compare", np.hstack((img, img1)))
+
+
+# 高斯滤波
+def ask9(img):
+    h, w, c = img.shape
+    img1 = np.zeros([h + 2, w + 2, 3], dtype=np.uint8)
+    img1[1:h + 1, 1:w + 1,:] = img
+    #cv_show("1", img1)
+
+    # img1=np.copy(img)
+    # kernel=np.random.normal(0, 1.3, (3, 3))
+    # print(kernel)
+    kernel = np.array([[1, 2, 1], [2, 4, 2], [1, 2, 1]]) / 16
+    #kernel = np.repeat(kernel, 3, axis=1).reshape(3, 3, 3)
+    print(kernel)
+    img2=np.zeros_like(img1)
+
+    t1=cv2.getTickCount()
+    for x in range(h):
+        for y in range(w):
+            for i in range(c):
+                #a=img1[x:x+3,y:y+3,i].copy()
+                #b=np.sum(a*kernel)
+                img2[x+1,y+1,i]=np.sum(img1[x:x+3,y:y+3,i]*kernel)
+    t2=cv2.getTickCount()
+
+    img2=img2[1:-1,1:-1]
+    print("方法1耗时{}us".format((t2-t1)/cv2.getTickFrequency()))
+
+    img3=np.zeros_like(img1)
+    t1=cv2.getTickCount()
+    kernel = np.repeat(kernel, 3, axis=1).reshape(3, 3, 3)
+    for x in range(h):
+        for y in range(w):
+                a=img1[x:x+3,y:y+3].copy()
+                b=np.sum(a*kernel,axis=(0,1)).astype(np.int8)
+                img3[x+1,y+1]=np.sum(a*kernel,axis=(0,1))
+    t2=cv2.getTickCount()
+
+    img3 = img3[1:-1, 1:-1]
+    print("方法2耗时{}us".format((t2-t1)/cv2.getTickFrequency()))
+
+    def gaussian_filter(img, K_size=3, sigma=1.3):
+        if len(img.shape) == 3:
+            H, W, C = img.shape
+        else:
+            img = np.expand_dims(img, axis=-1)
+            H, W, C = img.shape
+
+        ## Zero padding
+        pad = K_size // 2
+        out = np.zeros((H + pad * 2, W + pad * 2, C), dtype=float)
+        out[pad: pad + H, pad: pad + W] = img.copy().astype(float)
+
+        ## prepare Kernel
+        K = np.zeros((K_size, K_size), dtype=float)
+        for x in range(-pad, -pad + K_size):
+            for y in range(-pad, -pad + K_size):
+                K[y + pad, x + pad] = np.exp(-(x ** 2 + y ** 2) / (2 * (sigma ** 2)))
+        K /= (2 * np.pi * sigma * sigma)
+        K /= K.sum()
+
+        tmp = out.copy()
+
+        # filtering
+        for y in range(H):
+            for x in range(W):
+                for c in range(C):
+                    out[pad + y, pad + x, c] = np.sum(K * tmp[y: y + K_size, x: x + K_size, c])
+
+        out = np.clip(out, 0, 255)
+        out = out[pad: pad + H, pad: pad + W].astype(np.uint8)
+
+        return out
+
+    t1=cv2.getTickCount()
+    out=gaussian_filter(img)
+    t2=cv2.getTickCount()
+    print("官方方法耗时{}us".format((t2-t1)/cv2.getTickFrequency()))
+    cv_show("compare",np.hstack((img,img2,img3,out)))
+
+#中值滤波
+def ask10(img):
+    h, w, c = img.shape
+    img1 = np.zeros([h + 2, w + 2, 3], dtype=np.uint8)
+    img1[1:h + 1, 1:w + 1, :] = img
+    img2=img1.copy()
+    img3=img1.copy()
+
+    t1=cv2.getTickCount()
+    for x in range(1,h+1):
+        for y in range(1,w+1):
+            for i in range(c):
+                img2[x,y,i]=np.median(img1[x-1:x+2,y-1:y+2,i])
+
+    t2=cv2.getTickCount()
+    print("方法1耗时{}us".format((t2-t1)/cv2.getTickFrequency()))
+    img2 = img2[1:-1, 1:-1]
+
+    t1 = cv2.getTickCount()
+    for x in range(1, h + 1):
+        for y in range(1, w + 1):
+                img3[x, y] = np.median(img1[x - 1:x + 2, y - 1:y + 2],axis=(0,1))
+
+    t2 = cv2.getTickCount()
+    print("方法2耗时{}us".format((t2 - t1) / cv2.getTickFrequency()))
+    img3 = img3[1:-1, 1:-1]
+
+    cv_show("compare",np.hstack((img,img2,img3)))
 
 if __name__ == "__main__":
     img = cv2.imread("imori.jpg")
+    img1=cv2.imread("imori_noise.jpg")
     # ask1(img)
-    #img = np.random.randint(0, 255, (1, 1, 3)).astype("uint8")
+    # img = np.random.randint(0, 255, (1, 1, 3)).astype("uint8")
     # =np.vstack((img,img))
     # img=np.hstack((img,img))
-    print("img:",img)
+    # print("img:",img)
     # cv_show("img",img)
-    ask5(img)
+    ask10(img1)
