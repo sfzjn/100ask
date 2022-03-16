@@ -1,11 +1,6 @@
 import cv2
 import numpy as np
-
-
-def cv_show(name, img):
-    cv2.imshow(name, img)
-    cv2.waitKey(0)
-
+from common import cv_show
 
 # 通道交换
 def ask1(img):
