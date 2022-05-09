@@ -1,8 +1,7 @@
 import cv2
-import numpy
 import numpy as np
-from common import cv_show
-from common import TimeCost
+from util.common import cv_show
+
 
 def convolutin(kernel, grayimg):
     h, w = grayimg.shape
@@ -191,6 +190,6 @@ if __name__ == "__main__":
     img1 = cv2.imread("../lena_color_512.tif")
     img_noise=cv2.imread("imori_noise.jpg")
     #ask18(img)
-    #graysharpness(img1)
+    graysharpness(img1)
     #ask19(img_noise)
-    ask20(img)
+    # ask17(img)

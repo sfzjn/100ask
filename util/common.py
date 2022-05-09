@@ -1,4 +1,11 @@
 import cv2
+import tkinter as tk
+from tkinter import filedialog
+
+def open_dialog():
+    root = tk.Tk()
+    root.withdraw()
+    return filedialog.askopenfilename()
 
 def cv_show(name, img):
     cv2.namedWindow(name, cv2.WINDOW_AUTOSIZE)

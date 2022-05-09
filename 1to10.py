@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import sys
+sys.path.append("util")
 from common import cv_show
 
 # 通道交换
